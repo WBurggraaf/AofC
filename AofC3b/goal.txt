@@ -1,0 +1,8 @@
+These use cases aim to compute the maximum possible joltage values from battery banks in the escalator’s emergency power system.
+
+Each bank is given as a sequence of digits (1–9), and the system must extract the strongest possible joltage without reordering digits. 
+In Part 1, it selects the best two-digit combination formed by two digits that occur in left-to-right order. 
+In Part 2, it deterministically selects exactly 12 digits in order to form the largest possible 12-digit number. 
+The system validates all banks, rejects malformed or too-short inputs, and ensures deterministic, order-preserving selection. 
+For every valid bank, the computed joltage is added to a running total, which is returned along with per-bank results. 
+The goal is to give technicians reliable, maximized joltage values for restoring escalator power quickly and safely.

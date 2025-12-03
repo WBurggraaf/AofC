@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="AoC1/AoC1.csproj" />
+  <Project Path="AoC1b/AoC1b.csproj" />
+  <Project Path="AoC2a/AoC2a.csproj" Id="ce657d23-b4fe-4563-a8b3-0d4d3686e33f" />
+  <Project Path="AoC2b/AoC2b.csproj" Id="7c614d33-6fef-4b76-a11a-db64aacd4edb" />
+  <Project Path="AofC3a/AofC3a.csproj" Id="c678b4ef-e236-4a29-bffe-5b827150263f" />
+  <Project Path="AofC3b/AofC3b.csproj" Id="6851b2df-12b2-4ea4-a9e1-ad37603434a9" />
+</Solution>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maximum Joltage Use Case Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            font-family: monospace;
+            padding: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        .log {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Maximum Joltage Calculator (Use Case Demonstration)</h1>
+    <p>This static HTML file demonstrates each step of the Craig Larman–style use case: validating input, processing battery banks, selecting optimal digits, computing total joltage, and reporting results.</p>
+
+    <h2>Paste Your Battery Banks Below</h2>
+    <textarea id="input"></textarea>
+    <button onclick="runUseCase()">Run Use Case</button>
+
+    <h2>Use Case Execution Log</h2>
+    <div id="log" class="log"></div>
+
+    <script>
+        function log(msg) {
+            document.getElementById("log").textContent += msg + "\n";
+        }
+
+        function resetLog() {
+            document.getElementById("log").textContent = "";
+        }
+
+        function validateLine(line, index) {
+            if (!line.trim()) {
+                log(`Line ${index + 1}: Skipped empty line.`);
+                return false;
+            }
+            if (!/^[1-9]+$/.test(line)) {
+                throw new Error(`ERROR: Line ${index + 1} contains invalid characters. Only digits 1–9 allowed.`);
+            }
+            if (line.length < 2) {
+                throw new Error(`ERROR: Line ${index + 1} has fewer than two batteries.`);
+            }
+            log(`Line ${index + 1}: Validated as a battery bank.`);
+            return true;
+        }
+
+        function computeMaxJoltage(bank, index) {
+            log(`\nProcessing Bank ${index + 1}: ${bank}`);
+            let maxPair = -1;
+            let firstDigitIdx = -1;
+            let secondDigitIdx = -1;
+
+            for (let i = 0; i < bank.length - 1; i++) {
+                for (let j = i + 1; j < bank.length; j++) {
+                    const pairVal = parseInt(bank[i] + bank[j]);
+                    if (pairVal > maxPair) {
+                        maxPair = pairVal;
+                        firstDigitIdx = i;
+                        secondDigitIdx = j;
+                    }
+                }
+            }
+
+            log(`  Selected digits '${bank[firstDigitIdx]}' (index ${firstDigitIdx}) and '${bank[secondDigitIdx]}' (index ${secondDigitIdx}).`);
+            log(`  Bank ${index + 1} Maximum Joltage: ${maxPair}`);
+            return maxPair;
+        }
+
+        function runUseCase() {
+            resetLog();
+
+            log("Step 1: Technician submits the puzzle input.\n");
+
+            const raw = document.getElementById("input").value;
+            const lines = raw.split(/\n/);
+            const validBanks = [];
+
+            log("Step 2: System validates each line.\n");
+
+            try {
+                lines.forEach((line, idx) => {
+                    if (validateLine(line, idx)) {
+                        validBanks.push(line.trim());
+                    }
+                });
+
+                log("\nStep 3: System begins processing validated banks.");
+
+                let total = 0;
+                const perBankResults = [];
+
+                validBanks.forEach((bank, idx) => {
+                    const maxJ = computeMaxJoltage(bank, idx);
+                    perBankResults.push(maxJ);
+                    total += maxJ;
+                });
+
+                log("\nStep 7: System outputs final results.");
+                log("Per-bank maximum joltages: " + perBankResults.join(", "));
+                log("Total output joltage: " + total);
+
+            } catch (err) {
+                log("\n" + err.message);
+                log("Computation aborted due to input error.");
+            }
+        }
+    </script>
+</body>
+</html>

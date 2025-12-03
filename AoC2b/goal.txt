@@ -1,0 +1,7 @@
+The goal of these use cases is to ensure the Gift Shop’s product database remains accurate and free of erroneous product IDs. 
+
+The system (or Visiting Helper) receives numeric ID ranges and must scan every ID to detect those that follow an 
+invalid repetition pattern—either a sequence repeated exactly twice (basic rules) or two or more times (enhanced rules). 
+IDs with leading zeros or malformed ranges are skipped. All detected invalid IDs are collected, deduplicated, 
+and summed to provide the clerk with a clean, trustworthy list. The ultimate objective is to support proper inventory management, 
+prevent downstream system errors, and maintain data integrity within the North Pole Gift Shop.

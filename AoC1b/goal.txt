@@ -1,0 +1,8 @@
+Part 1 only checks the dial at the end of each turn: if it stops on 0, you count it once.
+Part 2 watches every single tick while the dial turns: every time it passes through 0, you count it, even if that happens many times in one turn.
+
+The whole goal of the assignment was to read a list of turning instructions for a circular dial numbered 0 to 99 and 
+figure out a secret password based on how often the dial reaches 0. First you solve it using the simpler rule 
+that only checks where the dial ends after each instruction. Then you solve it again using the updated security rule 
+that counts every moment the dial lands on 0 while moving. The challenge is to simulate the dial correctly, 
+handle wrap-around from 99 to 0, and make sure long rotations are counted properly.

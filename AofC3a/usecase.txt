@@ -1,0 +1,148 @@
+﻿Use Case: Generate Maximum Joltage for Each Battery Bank
+Scope
+
+Escalator Emergency Power System
+
+Level
+
+User goal
+
+Primary Actor
+
+Maintenance Technician (the player/you)
+
+Stakeholders & Interests
+
+Maintenance Technician – Wants to restore escalator power as fast as possible by calculating the maximum available joltage from each battery bank.
+
+Escalator System – Needs valid joltage input to operate; fails safely if invalid data is provided.
+
+Facility Operations – Want escalator operational for transport continuity.
+
+Elf Technician – Wants the escalator powered so she can focus on fixing the elevators.
+
+Preconditions
+
+The system has access to the full list of battery banks.
+
+Each bank is represented as a line of digits, each digit 1–9.
+
+Each bank contains at least two batteries.
+
+Minimal Guarantees
+
+System returns a clear error message if the input is invalid.
+
+No partial or corrupted computations are output.
+
+Success Guarantees
+
+For each battery bank, the system identifies the two digits which, in their original left-to-right order, form the maximum possible two-digit joltage.
+
+System outputs a single total (sum) of all banks’ maximum joltages.
+
+Main Success Scenario (Basic Flow)
+
+Technician requests joltage computation.
+The technician submits the puzzle input containing multiple lines of digits.
+
+System validates the input format.
+
+Every non-empty line must contain only digits 1–9.
+
+Each line represents one battery bank.
+
+System iterates through each battery bank.
+
+For a given bank, system scans left to right to find the highest possible two-digit combination.
+
+The system locates the highest-valued digit in the bank.
+
+Then, among digits to its right, finds the highest possible digit that forms the largest two-digit number with the first.
+
+If multiple options exist, the earliest optimal pair is chosen.
+
+System computes the bank's maximum joltage (e.g., digits 9 and 8 → “98”).
+
+System adds the bank's maximum joltage to a running total.
+
+After all banks are processed, system outputs:
+a. A list of max joltages per bank
+b. The total joltage sum
+
+Technician reviews the result and uses it to power the escalator.
+
+Extensions (Error & Alternate Handling)
+2a. Invalid Characters Found
+
+Condition: A line contains characters other than digits 1–9 (e.g., spaces, zeros, letters).
+
+System Action:
+
+Rejects the full input.
+
+Returns: “Error: Each battery bank must contain only digits 1–9.”
+
+Outcome: Technician corrects input and retries.
+
+2b. Bank Has Fewer Than Two Batteries
+
+Condition: A line contains only one digit.
+
+System Action:
+
+Rejects computation for this line.
+
+Returns error specifying offending line.
+
+Outcome: Technician must fix the battery list.
+
+3a. Empty Lines
+
+Condition: A blank line appears between banks.
+
+System Action:
+
+Ignores blank lines or optionally warns user depending on system configuration.
+
+4a. Highest digit occurs only at the last position
+
+Condition: Highest digit is at the final index; cannot serve as first digit of a two-digit pair.
+
+System Action:
+
+The system instead selects the next-highest eligible digit that has at least one digit to its right.
+
+7a. Total Joltage Overflow
+
+Condition: Extremely large input causes total to exceed system integer limits.
+
+System Action:
+
+Raises “Computation Overflow” error.
+
+Suggests chunked processing or system upgrade.
+
+Special Requirements
+
+Must preserve original left-to-right order of digits.
+
+Must not sort or rearrange batteries.
+
+Output must be deterministic given the same input.
+
+Large inputs (thousands of banks) must compute within reasonable time.
+
+Technology & Data Variations
+
+Format Variants:
+
+Input may come from a scanner, text field, terminal, or file.
+
+Output Variants:
+
+JSON for machine use.
+
+Text for technician readability.
+
+Diagnostic mode including per-bank digit selection steps.

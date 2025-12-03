@@ -1,0 +1,109 @@
+﻿Use Case: Identify Invalid Product IDs (Enhanced Repetition Rules)
+Use Case Name
+
+Identify Invalid Product IDs (Enhanced Repetition Rules)
+
+Scope
+
+Gift Shop Inventory System
+
+Level
+
+User-goal
+
+Primary Actor
+
+Gift Shop Clerk
+
+Stakeholders and Interests
+
+Gift Shop Clerk: Wants the system to detect all invalid product IDs so the product database remains clean.
+
+Gift Shop Manager: Wants accurate inventory records for operations and auditing.
+
+North Pole Systems Department: Wants clear, consistent validation rules for future error prevention.
+
+Preconditions
+
+The system has been provided with one or more product ID ranges (inclusive), each in “start-end” format.
+
+No ID contains leading zeros.
+
+Success Guarantee (Postconditions)
+
+The system has produced:
+
+A list of all invalid IDs in the provided ranges, according to the enhanced repetition rules.
+
+The sum of those invalid IDs.
+
+Main Success Scenario (Basic Flow)
+
+Clerk requests validation of the supplied product ID ranges.
+
+System parses the input ranges into numeric start–end pairs.
+
+For each ID in each range:
+
+System checks whether the ID consists of a digit sequence repeated two or more times.
+
+The repeating unit may be of any non-empty length.
+
+The repetition count must be ≥ 2.
+
+IDs with leading zeros are not considered valid inputs and are therefore skipped.
+
+If the ID satisfies the rule, system marks it as invalid.
+
+After all ranges have been processed, system collects all invalid IDs.
+
+System sums all the invalid IDs.
+
+System returns:
+
+The set of invalid IDs.
+
+The total sum.
+
+Extensions (Alternative Flows)
+3a. ID does not follow repetition pattern
+
+The system classifies the ID as valid and continues.
+
+3b. ID contains internal but incomplete repetition
+
+Example: 12312312
+
+System determines that the ID is not composed of repeated identical substrings.
+
+System classifies it as valid.
+
+3c. ID has only one repetition of its sequence
+
+Example: 123 or 101
+
+System classifies it as valid.
+
+3d. Repetition unit is a single digit
+
+Example: 1111111
+
+System recognizes this as repeating the digit "1" at least twice → invalid.
+
+2a. Corrupt range format
+
+System rejects malformed range strings and notifies clerk (outside the scope of the main puzzle).
+
+Special Requirements
+
+The check must handle large IDs (up to 10 digits in the provided input) efficiently.
+
+The system must evaluate every number inclusively within each range.
+
+The enhanced rule supersedes Part 1’s rule; every Part 1 invalid ID remains invalid.
+
+Technology and Data Variations List
+
+Ranges may appear on one line or multiple wrapped lines, but parsing treats them as a continuous comma-separated list.
+
+Repetition detection may use substring analysis, pattern matching, or modular length testing.

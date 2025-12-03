@@ -1,0 +1,254 @@
+﻿Use Case: UC‑1 – Open Secret Entrance with Rotation Document
+
+Scope: North Pole Secret Entrance Control System
+Level: User‑goal
+Primary Actor: Elf Decorator (the person trying to get inside / solve the puzzle)
+
+Stakeholders and Interests
+
+Elf Decorator (Primary Actor)
+
+Wants to open the secret entrance safely and quickly.
+
+Wants a clear way to transform the rotation document into the correct password.
+
+North Pole Security Department
+
+Wants the door to open only when the correct password is computed according to the current security method (0x434C49434B).
+
+Wants to log all attempts and detect incorrect or outdated methods.
+
+System Owner (Santa / IT elves)
+
+Wants the solution logic to correctly handle large distances and wrap‑around behavior on the 0–99 dial.
+
+Wants clear error messages when the input is malformed.
+
+Preconditions
+
+The Elf is physically at the secret entrance and has access to the rotation document (puzzle input).
+
+The Secret Entrance Control System is powered on and able to accept input.
+
+Dial rules are stable and known:
+
+Dial range is 0–99 (inclusive).
+
+Dial starts at 50 on every computation.
+
+L rotates toward lower numbers with wrap‑around (0 → 99).
+
+R rotates toward higher numbers with wrap‑around (99 → 0).
+
+Minimum Guarantee (Failure Postcondition)
+
+Door remains locked.
+
+The system logs that an attempt was made, including any errors encountered.
+
+No invalid state persists (no partial updates to lock mechanisms).
+
+Success Guarantee (Postcondition)
+
+The password has been computed using method 0x434C49434B (count every click that leaves the dial at 0).
+
+The correct password is applied to the door lock.
+
+The entrance door is unlocked and entry is granted.
+
+The attempt (inputs, method, result) is logged.
+
+Main Success Scenario (MSS)
+
+Goal: Compute the correct password using method 0x434C49434B and open the door.
+
+User – Approaches the secret entrance and initiates the “Open Door” function on the system panel.
+
+System – Displays a message explaining that the safe dial is virtual and that the password will be computed from a rotation document. Prompts the user to provide the rotation sequence.
+
+User – Provides the rotation document (the puzzle input: multiple lines like L68, R48, etc.) by uploading, pasting, or otherwise entering the text.
+
+System – Validates the document format:
+
+Each line must start with L or R.
+
+Each line must be followed by a non‑negative integer distance.
+
+System – Initializes the dial state:
+
+Sets current dial position to 50.
+
+Sets the zero‑hit counter to 0.
+
+System – For each rotation in the sequence, applies method 0x434C49434B:
+
+Determines the direction (L or R) and distance d.
+
+Conceptually performs d clicks, one at a time, updating the dial position with wrap‑around.
+
+After each click, checks if the dial points at 0; if yes, increments the zero‑hit counter.
+
+System – After processing the last rotation, treats the total zero‑hit counter as the password.
+
+System – Displays the computed password to the user and asks for confirmation to use it to unlock the door.
+
+User – Confirms that the displayed password should be applied to the door.
+
+System – Sends the password to the door lock controller, verifies that it matches the expected value, and unlocks the door.
+
+System – Shows a confirmation that the secret entrance is open and logs the successful attempt. The use case ends.
+
+Extensions / Alternative Flows (Craig Larman style)
+1a – User attempts to open door without the rotation document
+
+Condition: At step 2 or before step 3, the user does not actually have the rotation document yet.
+
+System – Displays an instruction: “You must obtain the attached rotation document to compute the password.”
+
+User – May request help or leave to obtain the document.
+
+Use case – Temporarily pauses; resumes from step 3 when the user has the document.
+
+Issue: User cannot proceed; process is blocked by missing mandatory input.
+
+2a – User chooses to use the physical safe instead of the system
+
+Condition: The user misinterprets instructions and tries to open the decoy safe manually.
+
+System – Does not detect progress on the system console; no password computation occurs.
+
+User – Eventually realizes the safe is a decoy (possibly from training or documentation).
+
+User – Returns to the panel and resumes at step 1 or 2.
+
+Issue: Time wasted; no security breach, but the use case is delayed.
+
+3a – User cancels input or closes the panel while entering the document
+
+Condition: The user aborts during or right after step 3.
+
+System – Asks: “Cancel password computation?”
+
+User – Confirms cancellation.
+
+System – Discards any temporary input and returns to an idle “Door Locked” state.
+
+Issue: Use case ends without computing a password. This is a normal, non‑error termination.
+
+4a – Syntax error in rotation document
+
+Condition: At step 4, at least one line in the document has invalid format (e.g., X10, L-5, Lten, blank line in the middle).
+
+System – Detects the first invalid line.
+
+System – Displays error E1: Invalid rotation syntax with the line number and offending text.
+
+System – Rejects the document and does not proceed to dial simulation.
+
+User – Corrects the document externally or re‑obtains it and resubmits from step 3.
+
+Issue: Password cannot be computed; data quality problem. User must fix the input source.
+
+4b – Empty document (no rotations)
+
+Condition: The document passes syntax checks but contains zero rotations.
+
+System – Displays a warning: “No rotations found. The dial will remain at 50, and 0 will never be hit. Password would be 0.”
+
+User – Chooses one of:
+
+4b.2a – Confirms to continue anyway → System sets password to 0 and continues at step 8.
+
+4b.2b – Cancels and returns to step 3 to provide a different document.
+
+Issue: Unusual but not invalid input. May indicate user supplied the wrong file or an incomplete puzzle input.
+
+5a – Dial initialization failure
+
+Condition: Internal system error during step 5 (e.g., corrupted configuration; dial range not available).
+
+System – Logs error E2: Dial initialization failure.
+
+System – Displays a generic error: “System cannot initialize safe dial. Please contact support.”
+
+System – Aborts the use case and keeps the door locked.
+
+Issue: Technical/system fault. Requires maintenance; not fixable by the user alone.
+
+6a – Legacy counting method (Part 1 behavior) is mistakenly used
+
+This corresponds to the story where the user first got the answer 1135 and the door did not open.
+
+Condition: At step 6, the user or system is still configured to use the old method (“count only times the dial is at 0 after a rotation completes”).
+
+System – For each rotation, moves the dial from its starting position to its final position in a single conceptual step.
+
+System – After each rotation completes, checks if the dial is at 0; if so, increments a counter.
+
+System – Uses this “end‑of‑rotation only” count as the password and proceeds with steps 7–10 as usual.
+
+System – Sends the password to the door controller.
+
+Then, at step 10:
+
+System – Door controller rejects the password (it doesn’t match the current method 0x434C49434B).
+
+System – Displays error E3: Password rejected – outdated method used.
+
+System – Suggests using password method 0x434C49434B and links to updated security instructions.
+
+User – Reads the new security document and re‑runs the use case from step 3, now using the correct method.
+
+Issue: Business rule mismatch – user uses a superseded counting method (Part 1 logic). Door remains locked; user must recompute password using the new rule.
+
+6b – Large rotation distances (e.g., R1000)
+
+Condition: Some rotations have distances ≥ 100 or very large (like R1000), causing multiple full wraps around the dial.
+
+System – Instead of simulating every single click naively, computes:
+
+How many complete 0–99 cycles occur, and
+
+Whether 0 is passed in the partial remainder.
+
+System – Increments the zero‑hit counter by:
+
+fullCycles (number of full 100‑click loops that pass 0), plus
+
+1 if the partial remainder passes 0, depending on starting position and direction.
+
+System – Continues to the next rotation.
+
+Issue (performance/accuracy):
+
+If implemented naively (one click at a time) performance may degrade for very large distances.
+
+If optimized incorrectly, the system may miscount how many times 0 is hit (e.g., forgetting that R1000 from 50 hits 0 ten times).
+
+7a – User refuses computed password
+
+Condition: At step 8, the user does not trust or accept the displayed password.
+
+User – Selects “Do not use this password” and requests details.
+
+System – Optionally displays a summarized log of how the dial moved and how many zero hits occurred per rotation.
+
+User – Either:
+
+Accepts the explanation and returns to step 8 to confirm, or
+
+Cancels the operation, ending the use case without opening the door.
+
+Issue: Usability/understanding issue rather than technical fault; user needs transparency.
+
+9a – Password entry fails externally
+
+Condition: At step 10, the password is correct, but the door lock hardware fails (mechanical error).
+
+System – Receives an error from door controller: E4: Mechanical lock failure.
+
+System – Displays: “Password accepted, but the lock cannot open. Contact maintenance.”
+
+System – Logs the incident; door remains locked.
+
+Issue: External hardware/system integration failure; computation is correct, but physical opening fails.

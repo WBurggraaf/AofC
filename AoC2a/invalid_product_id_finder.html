@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Invalid Product ID Solver</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>North Pole Gift Shop — Invalid Product ID Finder</h1>
+    <p>This static tool follows the use case exactly and identifies invalid product IDs: those composed of an even-length digit string made of two identical halves.</p>
+
+    <h2>Input Ranges</h2>
+    <p>Enter comma-separated numeric ranges like: <code>10-200, 3000-3555</code></p>
+<textarea id="ranges"></textarea><br><br>
+    <button onclick="processRanges()">Process</button>
+
+    <h2>Results</h2>
+    <div id="errors" class="error"></div>
+    <h3>Invalid IDs (unique)</h3>
+<pre id="resultIDs"></pre>
+    <h3>Total Sum</h3>
+<pre id="resultSum"></pre>
+
+    <script>
+        // --- Helper: Check if ID is invalid per the exact pattern ---
+        function isInvalidID(idStr) {
+            // 1. No leading zeros
+            if (idStr.length > 1 && idStr[0] === '0') return false;
+
+            // 2. Even length
+            if (idStr.length % 2 !== 0) return false;
+
+            let half = idStr.length / 2;
+            let left = idStr.slice(0, half);
+            let right = idStr.slice(half);
+
+            // 3. Exactly two identical halves
+            return left === right;
+        }
+
+        // --- Main Processing Function ---
+        function processRanges() {
+            const input = document.getElementById("ranges").value;
+            const segments = input.split(',');
+
+            let invalidIDs = new Set();
+            let errors = [];
+
+            for (let seg of segments) {
+                seg = seg.trim();
+                if (!seg) continue; // empty segment
+
+                // Validate range format
+                if (!seg.includes('-')) {
+                    errors.push(`Malformed range (missing dash): "${seg}"`);
+                    continue;
+                }
+
+                let [startStr, endStr] = seg.split('-').map(s => s.trim());
+
+                // Both numbers must be valid digits
+                if (!/^\d+$/.test(startStr) || !/^\d+$/.test(endStr)) {
+                    errors.push(`Malformed range (non-numeric): "${seg}"`);
+                    continue;
+                }
+
+                let start = Number(startStr);
+                let end = Number(endStr);
+
+                if (isNaN(start) || isNaN(end)) {
+                    errors.push(`Malformed range (cannot parse numbers): "${seg}"`);
+                    continue;
+                }
+
+                // Out-of-order ranges
+                if (start > end) {
+                    errors.push(`Invalid range (start > end): "${seg}"`);
+                    continue;
+                }
+
+                // Enumerate
+                for (let id = start; id <= end; id++) {
+                    let idStr = String(id);
+                    if (isInvalidID(idStr)) {
+                        invalidIDs.add(id);
+                    }
+                }
+            }
+
+            // Display results
+            document.getElementById("errors").innerText = errors.join("\n");
+            document.getElementById("resultIDs").innerText = Array.from(invalidIDs).sort((a, b) => a - b).join(', ');
+
+            // Compute sum using BigInt
+            let sum = [...invalidIDs].reduce((acc, v) => acc + BigInt(v), BigInt(0));
+            document.getElementById("resultSum").innerText = sum.toString();
+        }
+    </script>
+</body>
+</html>

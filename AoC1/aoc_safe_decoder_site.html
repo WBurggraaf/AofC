@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advent of Code - Safe Decoder</title>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    textarea { width: 100%; height: 200px; }
+    .result { margin-top: 1rem; padding: 1rem; border: 1px solid #ccc; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>Secret Entrance Safe Decoder</h1>
+  <p>Paste your rotation instructions below. Each line must be in the form <code>L#</code> or <code>R#</code>. The dial starts at 50. The password is the number of times the dial ends at 0 after a rotation.</p>
+
+  <form id="decodeForm" hx-post="#" hx-trigger="submit" onsubmit="computePassword(); return false;">
+    <textarea id="inputText" placeholder="Enter rotations like:
+L68
+R12
+L5"></textarea>
+    <br/><br/>
+    <button type="submit">Compute Password</button>
+  </form>
+
+  <div id="output" class="result"></div>
+
+<script>
+function computePassword() {
+  const output = document.getElementById("output");
+  output.innerHTML = "";
+
+  const text = document.getElementById("inputText").value;
+  if (!text.trim()) {
+    output.innerHTML = '<p class="error">Error: No input provided.</p>';
+    return;
+  }
+
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  let dial = 50;
+  let zeroCount = 0;
+  let errors = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const match = /^(L|R)(\d+)$/.exec(line);
+    if (!match) {
+      errors.push(`Line ${i+1}: Invalid instruction '${line}'`);
+      continue; // lenient mode: skip invalid lines
+    }
+
+    const dir = match[1];
+    const dist = parseInt(match[2], 10) % 100; // business rule: modulo reduction
+
+    if (dir === 'L') {
+      dial = (dial - dist) % 100;
+      if (dial < 0) dial += 100;
+    } else {
+      dial = (dial + dist) % 100;
+    }
+
+    if (dial === 0) zeroCount++;
+  }
+
+  let html = `<h2>Results</h2>
+              <p><strong>Password:</strong> ${zeroCount}</p>`;
+
+  if (errors.length > 0) {
+    html += `<h3>Warnings (lenient mode)</h3><ul>`;
+    errors.forEach(e => html += `<li class="error">${e}</li>`);
+    html += `</ul>`;
+  }
+
+  output.innerHTML = html;
+}
+</script>
+</body>
+</html>

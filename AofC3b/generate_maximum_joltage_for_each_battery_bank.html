@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Joltage Computation Use Case - Interactive</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+            background: #f4f4f4;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            font-size: 1rem;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            background: #0077cc;
+            color: white;
+            border-radius: 6px;
+        }
+
+            button:hover {
+                background: #005fa3;
+            }
+
+        pre {
+            background: #eee;
+            padding: 10px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Interactive Joltage Computation (Use Case-Driven)</h1>
+
+    <section>
+        <h2>Input Battery Banks</h2>
+        <p>Enter one bank per line. Each bank must follow the use-case rules:</p>
+        <ul>
+            <li>Only digits 1–9</li>
+            <li>Length ≥ 12</li>
+            <li>Left-to-right order preserved</li>
+            <li>12 digits must be chosen using deterministic maximal selection</li>
+        </ul>
+
+        <textarea id="banksInput" placeholder="Example:
+19875431256997731
+94321
+777888999111222333
+98A7123456"></textarea>
+        <br /><br />
+        <button onclick="runComputation()">Compute Total Joltage</button>
+    </section>
+
+    <section>
+        <h2>Results</h2>
+        <div id="results"></div>
+    </section>
+
+    <script>
+        // --- USE CASE RULE ENFORCEMENT ---
+
+        // Validate rule: digits only (1–9) AND length ≥ 12
+        function validateBank(bank) {
+            if (!/^[1-9]+$/.test(bank)) return { valid: false, reason: "Contains invalid characters (must be 1–9 only)" };
+            if (bank.length < 12) return { valid: false, reason: "Fewer than 12 digits" };
+            return { valid: true };
+        }
+
+        // Joltage Selection Algorithm — enforces:
+        // • Maximize 12-digit result
+        // • Preserve order
+        // • Deterministic (leftmost max)
+        // • Use earliest feasible max digit
+        function selectJoltage12(bank) {
+            let needed = 12;
+            let result = "";
+            let i = 0;
+
+            while (needed > 0) {
+                let maxDigit = "0";
+                let maxPos = i;
+
+                // Only search where enough digits remain
+                let limit = bank.length - needed;
+
+                for (let pos = i; pos <= limit; pos++) {
+                    let d = bank[pos];
+                    if (d > maxDigit) {
+                        maxDigit = d;
+                        maxPos = pos;
+                    }
+                }
+
+                result += maxDigit;      // deterministic leftmost max
+                i = maxPos + 1;          // move forward
+                needed--;
+            }
+
+            return result;
+        }
+
+        // Main computation
+        function runComputation() {
+            const lines = document.getElementById("banksInput").value.trim().split(/\n+/);
+            let output = "";
+            let total = 0n; // arbitrary precision (BigInt)
+
+            lines.forEach((bank, index) => {
+                const v = validateBank(bank);
+
+                if (!v.valid) {
+                    output += `<h3>Bank ${index + 1} (${bank}) — INVALID</h3>`;
+                    output += `<p>${v.reason}</p>`;
+                    return;
+                }
+
+                // VALID — execute selection logic per use case
+                const joltageStr = selectJoltage12(bank);
+                const joltageNum = BigInt(joltageStr);
+
+                output += `<h3>Bank ${index + 1} (${bank})</h3>`;
+                output += `<pre>Selected 12-digit joltage: ${joltageStr}</pre>`;
+
+                total += joltageNum;
+            });
+
+            output += `<h2>Total Joltage</h2>`;
+            output += `<pre>${total.toString()}</pre>`;
+
+            document.getElementById("results").innerHTML = output;
+        }
+    </script>
+
+</body>
+</html>

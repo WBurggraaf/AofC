@@ -1,0 +1,181 @@
+﻿1. Use Case Overview
+
+Name: Compute Secret Entrance Password
+
+Scope: North Pole Safe Decoder System (single program / feature)
+
+Level: User-goal
+
+Primary Actor: Elf Decorator / Player
+
+Stakeholders & Interests:
+
+Elf Decorator – Wants a reliable way to compute the password from the given instructions.
+
+Security Elves – Want the rules followed exactly so the safe logic is correct.
+
+Santa / North Pole Ops – Want the system to be robust to bad input and edge cases.
+
+2. Preconditions & Guarantees
+
+Preconditions
+
+The attached document (puzzle input) exists in a place the system can read (e.g., file, stdin, text field).
+
+The dial’s logical model is defined: numbers 0–99, circular, starting position = 50.
+
+Minimal Guarantee (Failure Postcondition)
+
+The system reports that the password could not be computed and explains the error condition.
+
+Success Guarantee (Postcondition)
+
+The system has parsed all valid rotations in the document.
+
+The system has simulated the dial according to all rotations, including wrap-around.
+
+The system has computed and presented the password = number of times the dial points at 0 after a rotation.
+
+3. Main Success Scenario (Base Process)
+
+Elf starts password computation
+
+The Elf instructs the system to compute the password, providing the puzzle input (attached document with rotations, one per line).
+
+System parses and simulates all rotations
+
+The system:
+
+Initializes the dial position to 50.
+
+Reads the document line by line.
+
+For each line, parses:
+
+A direction: 'L' (left → toward lower numbers) or 'R' (right → toward higher numbers).
+
+A non-negative integer distance (number of clicks).
+
+For each rotation, updates the dial position:
+
+L decreases the dial value by distance with wrap-around in [0, 99].
+
+R increases the dial value by distance with wrap-around in [0, 99].
+
+After each rotation, the system checks whether the dial is at 0 and increments an internal counter when it is.
+
+System outputs the password
+
+After all rotations are processed, the system outputs:
+
+The password = the number of times the dial was left pointing at 0 immediately after a rotation.
+
+The system presents this value to the Elf (e.g., console output, UI field, log).
+
+4. Extensions / Alternative Flows
+
+(Using Craig Larman–style numbering: 1a, 2a, 3a, 3b, …)
+
+1a. Puzzle input source unavailable or unreadable
+
+Condition: At step 1, the system cannot read the attached document
+(e.g., file missing, permission denied, empty input parameter).
+
+Flow:
+1a1. System logs/indicates the inability to access the document.
+1a2. System aborts the use case and reports an error message:
+“Cannot read puzzle input (safe instructions).”
+1a3. Use case ends with failure postcondition.
+
+2a. Invalid instruction format in a line
+
+Condition: At step 2, while reading a line, the system encounters a line that does not match the expected pattern:
+
+Missing direction (L or R), or
+
+Direction not in {L,R}, or
+
+Distance not a valid non-negative integer, or
+
+Extra garbage characters.
+
+Flow (strict mode – fail fast):
+2a1. System identifies the line as invalid and associates it with a line number.
+2a2. System stops further processing.
+2a3. System reports:
+- That the puzzle input is invalid.
+- Which line(s) caused the problem and why (e.g., “Line 17: invalid rotation ‘Qabc’”).
+2a4. Use case ends with failure postcondition.
+
+(Optional variant – lenient mode: skip invalid lines instead of failing)
+
+Alternate handling:
+2a1’. System logs a warning for the invalid line (line number + reason).
+2a2’. System skips the line and continues parsing subsequent lines.
+2a3’. Use case then resumes at step 2 with the next line, and continues normally.
+
+3a. No valid rotations found
+
+Condition: After step 2, the system has either:
+
+Read an empty document; or
+
+All lines were invalid and ignored (lenient mode); or
+
+There are zero successfully parsed rotations.
+
+Flow:
+3a1. System sets the password to 0 (the dial never moved and thus never ended at 0 after a rotation).
+3a2. System outputs a message such as: “No valid rotations; password is 0.”
+3a3. Use case ends with success guarantee (password computed = 0).
+
+3b. Very large rotation distances
+
+Condition: In step 2, some lines specify very large rotation distances (e.g., 10,000,000).
+
+Flow:
+3b1. System safely reduces each distance modulo 100 (since rotating 100 steps returns to the same position), i.e., effective_distance = distance % 100.
+3b2. System applies the rotation using effective_distance while keeping exact wrap-around behavior.
+3b3. Counting of zeros and output proceed normally as in the main success scenario.
+
+5. Expected Errors & Issues (Non-functional & Edge-Case Notes)
+
+Parsing / Input Issues
+
+Missing or unreadable puzzle input (file not found, wrong path, no text provided).
+
+Lines with whitespace-only content (should usually be ignored).
+
+Mixed line endings or encoding issues causing mis-parsing.
+
+Format / Data Issues
+
+Direction character not 'L' or 'R'.
+
+Distance not an integer (letters, symbols, decimals).
+
+Negative distance values (may be treated as invalid rather than “reverse direction”).
+
+Trailing comments or extra tokens on a line that break strict parsing.
+
+Logical / Numerical Issues
+
+Failing to treat the dial as circular (forgetting wrap-around at 0 and 99).
+
+Off-by-one errors in wrap-around logic (incorrectly wrapping at 100 or -1).
+
+Not starting from the correct initial value (should be 50).
+
+Counting “start at 50” as a hit on 0 (it must only be counted after a rotation).
+
+Performance / Robustness
+
+Very large inputs (many lines) causing slow performance if inefficient algorithms are used.
+
+Extremely large distances without using modulo 100 leading to integer overflow in some languages or unnecessary computation.
+
+User Feedback Issues
+
+Error messages too vague (“something went wrong”) instead of explaining the exact line/issue.
+
+Not clearly labeling the final number as the password in the UI/console.

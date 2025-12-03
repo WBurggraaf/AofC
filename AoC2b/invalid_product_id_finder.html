@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invalid Product ID Detector (AoC Day 2 – Part 2)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 140px;
+            font-family: monospace;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+        }
+
+        h2 {
+            margin-top: 40px;
+        }
+
+        pre {
+            background: #f3f3f3;
+            padding: 12px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Invalid Product ID Detector – Advent of Code Day 2 (Part 2 Rules)</h1>
+
+    <p>Paste your product ID ranges below (comma-separated, "start-end"):</p>
+
+<textarea id="rangesInput">11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124</textarea>
+
+    <br>
+    <button onclick="runUseCase()">Run Use Case</button>
+
+    <h2>Results</h2>
+    <p><strong>Invalid IDs:</strong></p>
+<pre id="invalidList"></pre>
+
+    <p><strong>Sum of invalid IDs:</strong></p>
+<pre id="sumOut"></pre>
+
+    <script>
+        /**
+         * Check if a number string is composed of a repeating substring (>=2 times).
+         * Example invalids:
+         *  - "1212" (12×2)
+         *  - "1111111" (1×7)
+         *  - "123123123" (123×3)
+         */
+        function isRepeatedSequence(numStr) {
+            const len = numStr.length;
+
+            // Try all possible sequence lengths (must divide evenly)
+            for (let seqLen = 1; seqLen <= len / 2; seqLen++) {
+                if (len % seqLen !== 0) continue;
+
+                const unit = numStr.slice(0, seqLen);
+                let built = "";
+
+                const repeatCount = len / seqLen;
+                if (repeatCount < 2) continue;
+
+                for (let i = 0; i < repeatCount; i++) built += unit;
+
+                if (built === numStr) return true;
+            }
+            return false;
+        }
+
+        /**
+         * Main use-case execution.
+         * Parses ranges, expands them, checks repetition rule, sums invalids.
+         */
+        function runUseCase() {
+            const raw = document.getElementById("rangesInput").value.trim();
+            const ranges = raw.split(",").map(r => r.trim()).filter(Boolean);
+
+            let invalidIDs = [];
+
+            for (const range of ranges) {
+                const match = range.match(/^(\d+)-(\d+)$/);
+                if (!match) continue; // skip malformed inputs
+
+                const start = BigInt(match[1]);
+                const end = BigInt(match[2]);
+
+                for (let n = start; n <= end; n++) {
+                    const s = n.toString();
+
+                    // Leading zero safety (though puzzle guarantees this)
+                    if (s.startsWith("0")) continue;
+
+                    if (isRepeatedSequence(s)) {
+                        invalidIDs.push(n);
+                    }
+                }
+            }
+
+            // Output invalid IDs
+            document.getElementById("invalidList").textContent =
+                invalidIDs.map(v => v.toString()).join("\n");
+
+            // Compute sum
+            let total = invalidIDs.reduce((acc, v) => acc + v, 0n);
+
+            document.getElementById("sumOut").textContent = total.toString();
+        }
+    </script>
+
+</body>
+</html>

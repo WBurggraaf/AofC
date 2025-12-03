@@ -1,0 +1,80 @@
+# -----------------------------------------
+# OS / Editor
+# -----------------------------------------
+# VS Code settings
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# -----------------------------------------
+# .NET / C# Build Artifacts
+# -----------------------------------------
+bin/
+obj/
+out/
+Debug/
+Release/
+
+# Auto-generated files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# ASP.NET temp files
+.vs/
+Generated\ Files/
+
+# Compile result
+*.dll
+*.exe
+*.app
+*.dylib
+*.so
+*.pdb
+
+# -----------------------------------------
+# NuGet
+# -----------------------------------------
+*.nupkg
+*.snupkg
+packages/
+# NuGet restore folder (if used)
+project.lock.json
+project.fragment.lock.json
+
+# -----------------------------------------
+# Rider / JetBrains (optional)
+# -----------------------------------------
+.idea/
+*.sln.iml
+
+# -----------------------------------------
+# Mono
+# -----------------------------------------
+mono_crash.*
+
+# -----------------------------------------
+# Others
+# -----------------------------------------
+# User secrets (ASP.NET Core)
+**/secrets.json
+
+# Environment variables file
+*.env
+.env.*
+
+# Generated documentation
+docfx/_site/

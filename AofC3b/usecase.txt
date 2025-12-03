@@ -1,0 +1,67 @@
+﻿USE CASE: Compute Maximum 12-Battery Joltage per Bank
+
+Primary Actor:
+• User
+
+Supporting Actors:
+• Joltage Selection Algorithm (internal system responsibility)
+
+Stakeholders and Interests:
+• User: Wants the system to generate the maximum possible 12-digit joltage value for each battery bank without rearranging digits.
+• System: Must apply deterministic selection rules and produce correct numeric results.
+
+Preconditions:
+• Input consists of zero or more banks.
+• Each bank is a non-empty sequence of digits 1–9.
+• Valid banks for Part 2 contain at least 12 digits.
+
+Postconditions:
+• For each valid bank, exactly one 12-digit joltage value is produced.
+• The total output joltage is the sum of all valid per-bank results.
+• Invalid banks are reported and excluded from the total.
+
+Main Success Scenario:
+
+The user provides the full list of battery banks.
+
+For each bank, the system validates the line as a sequence of digits 1–9 with length ≥ 12.
+
+For each valid bank, the system invokes the Joltage Selection Algorithm to choose exactly 12 digits in original order that maximize the resulting numerical value.
+
+The system constructs the joltage by concatenating the 12 selected digits.
+
+The system adds this value to the running total.
+
+After all banks are processed, the system returns the total joltage.
+
+Extensions:
+2a. Bank contains fewer than 12 digits.
+ 1. The system reports the bank as invalid.
+ 2. The system excludes the bank from processing and from the total.
+
+2b. Bank contains characters not in 1–9.
+ 1. The system reports the bank as invalid.
+ 2. The system excludes the bank from the total.
+
+3a. Multiple digit sequences within the bank offer equal maximal prefixes.
+ 1. The Joltage Selection Algorithm deterministically chooses the leftmost maximal candidate, ensuring consistent behavior.
+
+4a. The 12-digit number begins with a lower digit than an early alternative choice.
+ 1. The system ensures the algorithm has enforced the rule that the earliest possible larger digit must be chosen if feasible under remaining-length constraints.
+
+6a. Total value exceeds fixed-size integer range.
+ 1. The system uses arbitrary-precision arithmetic.
+ 2. If unavailable, the system reports numeric overflow.
+
+Special Requirements:
+• The chosen digits must preserve their original left-to-right order.
+• Exactly 12 digits must be selected for each valid bank.
+• The Joltage Selection Algorithm must maximize the numerical result and be deterministic.
+• Each bank is processed independently.
+• The system must support large integer results.
+
+Frequency of Occurrence:
+• Once per input set.
+
+Open Issues:
+• None.
