@@ -1,0 +1,121 @@
+Use Case: Remove Accessible Paper Rolls
+Scope
+
+North Pole Printing Department System
+
+Level
+
+User goal
+
+Primary Actor
+
+Forklift Coordination System (FCS)
+
+Stakeholders and Interests
+
+Elves (Printing Department)
+Want forklifts to remove as many paper rolls as possible to free up resources for breaking through the wall.
+
+Forklifts
+Want clear instructions about which rolls are accessible at each step.
+
+Santa’s Operations Division
+Wants efficient processing with no risk of deadlock or infinite loops.
+
+Preconditions
+
+The complete paper roll diagram is available as a 2D grid.
+
+Each cell is either a roll of paper (@) or empty (.).
+
+Postconditions
+
+Success Guarantee:
+All paper rolls that ever become accessible under the defined rules are removed.
+The total count of removed rolls is returned.
+
+Minimal Guarantee:
+System state is unchanged if no roll is initially accessible.
+
+Main Success Scenario (MSS)
+
+(Also known as the “happy path” in Larman’s format)
+
+FCS loads the initial grid of paper roll positions.
+
+FCS identifies accessible rolls:
+A roll is accessible if it has fewer than four adjacent rolls among the eight surrounding cells.
+
+FCS collects all currently accessible rolls into a removal list.
+
+FCS removes all rolls in the removal list simultaneously.
+
+FCS updates the grid, clearing the removed positions.
+
+FCS re-evaluates the grid to determine newly accessible rolls after the previous removals.
+
+FCS repeats steps 3–6 until no accessible rolls remain.
+
+FCS computes the total number of removed rolls.
+
+System reports the final total to the Elves.
+
+Extensions (Errors, Exceptions, Alternative Flows)
+2a. No rolls are accessible initially
+
+2a1. FCS detects that number of accessible rolls is zero.
+
+2a2. FCS terminates early and returns a total removed count of 0.
+
+(But in the actual puzzle, this never happens with real input.)
+
+3a. FCS identifies an unexpectedly large number of accessible rolls (potential data error)
+
+3a1. FCS checks if the accessible count exceeds a threshold relative to grid size (sanity check).
+
+3a2. If threshold exceeded, FCS logs a diagnostic warning but continues.
+(Larman-style systems often include soft error handling without halting.)
+
+4a. Attempt to remove a roll that no longer exists (race condition or stale state)
+
+Though this cannot occur in the puzzle, Larman-style use cases permit consistency errors:
+
+4a1. FCS validates the roll coordinates before removal.
+
+4a2. If roll is not present, skip removal and log a consistency warning.
+
+4a3. Continue processing remaining rolls.
+
+6a. A roll oscillates between accessible and inaccessible states due to partial updates
+
+(This models a state-transition error condition not possible in AoC but allowed in robust system design.)
+
+6a1. FCS applies removals only simultaneously, never incrementally.
+
+6a2. If oscillation is detected in debug mode, FCS resolves by snapshotting the grid before and after each iteration and comparing.
+
+6a3. Proceed to next iteration with validated state.
+
+7a. Infinite loop detected
+
+(Not possible due to monotonically decreasing rolls, but included as an extension condition.)
+
+7a1. FCS detects repeated grid states.
+
+7a2. FCS halts iteration and logs an error.
+
+7a3. FCS returns the number of rolls removed up to this point.
+
+9a. Output channel failure
+
+9a1. If system cannot report the final count (I/O error), it retries up to N times.
+
+9a2. If still unsuccessful, FCS stores the result in a local fallback log for the Elves to retrieve manually.
+
+Special Requirements
+
+The grid evaluation must run efficiently enough to handle large diagrams.
+
+All accessibility decisions for an iteration must be based on the state prior to removals (simultaneous application).
+
+The process must always terminate since the number of rolls decreases monotonically.

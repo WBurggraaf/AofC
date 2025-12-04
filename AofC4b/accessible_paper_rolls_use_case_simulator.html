@@ -1,0 +1,196 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Paper Roll Removal Simulation – Use Case Runner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f4f4f4;
+        }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+        }
+
+        pre {
+            background: #222;
+            color: #0f0;
+            padding: 10px;
+            overflow-x: auto;
+        }
+
+        .section {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        .info {
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Advent of Code – Paper Roll Removal Use Case Simulator</h1>
+
+    <div class="section">
+        <h2>Input Grid</h2>
+        <p>Enter the grid (use @ for rolls and . for empty):</p>
+        <textarea id="inputGrid">..@@.@@@@.
+@@@.@.@.@@
+@@@@@.@.@@
+@.@@@@..@.
+@@.@@@@.@@
+.@@@@@@@.@
+.@.@.@.@@@
+@.@@@.@@@@
+.@@@@@@@@.
+@.@.@@@.@.</textarea><br><br>
+        <button onclick="runSimulation()">Run Simulation</button>
+    </div>
+
+    <div class="section">
+        <h2>Simulation Output</h2>
+        <pre id="output">Waiting for input...</pre>
+    </div>
+
+    <script>
+        /* -------------------------
+           Utility functions
+        -------------------------- */
+
+        function parseGrid(text) {
+            return text.trim().split("\n").map(row => row.split(""));
+        }
+
+        function cloneGrid(g) {
+            return g.map(r => [...r]);
+        }
+
+        // Count adjacent rolls
+        function countNeighbors(grid, r, c) {
+            const dirs = [
+                [-1, -1], [-1, 0], [-1, 1],
+                [0, -1], [0, 1],
+                [1, -1], [1, 0], [1, 1]
+            ];
+            let count = 0;
+            for (let [dr, dc] of dirs) {
+                let rr = r + dr, cc = c + dc;
+                if (grid[rr] && grid[rr][cc] === "@") count++;
+            }
+            return count;
+        }
+
+        // Format grid as text
+        function gridToString(grid) {
+            return grid.map(r => r.join("")).join("\n");
+        }
+
+        /* -------------------------
+           MAIN SIMULATION LOGIC
+        -------------------------- */
+
+        function runSimulation() {
+            const output = document.getElementById("output");
+            output.textContent = "";
+            let grid;
+
+            // ********* Step 1: Load Grid *********
+            try {
+                grid = parseGrid(document.getElementById("inputGrid").value);
+                output.textContent += "STEP 1 — Grid Loaded Successfully.\n\n";
+            } catch (e) {
+                output.textContent += "ERROR 1A — Unable to parse grid.\n";
+                return;
+            }
+
+            let iteration = 0;
+            let totalRemoved = 0;
+
+            // Detect repeated states (infinite loop guard)
+            const seenStates = new Set();
+
+            while (true) {
+                iteration++;
+
+                output.textContent += "------------------------------\n";
+                output.textContent += `ITERATION ${iteration}\n`;
+                output.textContent += "------------------------------\n";
+
+                const beforeState = gridToString(grid);
+                if (seenStates.has(beforeState)) {
+                    output.textContent +=
+                        "ERROR 7A — Infinite loop detected! Halting.\n";
+                    break;
+                }
+                seenStates.add(beforeState);
+
+                output.textContent += "Current Grid:\n" + beforeState + "\n\n";
+
+                // ********* Step 2: Identify Accessible Rolls *********
+                let accessible = [];
+
+                for (let r = 0; r < grid.length; r++) {
+                    for (let c = 0; c < grid[r].length; c++) {
+                        if (grid[r][c] === "@") {
+                            const neighbors = countNeighbors(grid, r, c);
+                            if (neighbors < 4)
+                                accessible.push([r, c]);
+                        }
+                    }
+                }
+
+                if (accessible.length === 0) {
+                    output.textContent +=
+                        "STEP 2A — No accessible rolls remaining. Processing stops.\n\n";
+                    break;
+                }
+
+                output.textContent +=
+                    `STEP 2 — Rolls accessible this iteration: ${accessible.length}\n`;
+
+                // Sanity check (extension 3a)
+                if (accessible.length > grid.length * grid[0].length * 0.75) {
+                    output.textContent +=
+                        "WARNING 3A — Unusually high number of accessible rolls.\n";
+                }
+
+                // ********* Step 4: Remove Rolls *********
+                let newGrid = cloneGrid(grid);
+
+                for (let [r, c] of accessible) {
+                    if (newGrid[r][c] !== "@") {
+                        output.textContent +=
+                            `WARNING 4A — Attempted to remove missing roll at (${r},${c}).\n`;
+                        continue;
+                    }
+                    newGrid[r][c] = ".";
+                }
+
+                totalRemoved += accessible.length;
+
+                output.textContent += "Grid after removal:\n";
+                output.textContent += gridToString(newGrid) + "\n\n";
+
+                grid = newGrid;
+            }
+
+            output.textContent += `\n==============================\n`;
+            output.textContent += `TOTAL ROLLS REMOVED: ${totalRemoved}\n`;
+            output.textContent += `==============================\n`;
+        }
+    </script>
+
+</body>
+</html>

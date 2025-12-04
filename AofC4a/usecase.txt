@@ -1,0 +1,111 @@
+Use Case: Determine Accessible Paper Rolls
+Primary Actor
+
+Forklift Optimization Service (FOS)
+
+Stakeholders and Interests
+
+Elves (Printing Department) – Want to minimize forklift search time so forklifts can help break through the wall.
+
+Forklift Operators – Want a clear, computed list of paper rolls that are accessible according to adjacency rules.
+
+System Maintainers – Want robust input handling and clear failure modes.
+
+Preconditions
+
+A grid-based diagram of paper roll locations is available.
+
+The diagram uses the character @ to denote a paper roll and . for empty space.
+
+The system has permission to load or receive the puzzle input.
+
+Postconditions
+
+On Success:
+The system returns the count of all paper rolls with fewer than four adjacent rolls (8-neighborhood), and (optionally) their coordinates or annotated map.
+
+On Failure:
+The system reports the specific cause (invalid format, missing grid, malformed characters, etc.).
+
+Main Success Scenario (MSS)
+
+FOS requests the grid representing paper roll positions.
+
+System validates that the grid contains only expected characters (@ and .).
+
+System parses the grid into a two-dimensional structure of cells.
+
+For each cell containing a roll (@):
+4.1. System identifies its up to eight adjacent cells.
+4.2. System counts how many adjacent cells also contain @.
+4.3. System determines accessibility:
+- If adjacent roll count < 4, mark this roll as accessible.
+
+System aggregates the set of accessible rolls.
+
+System returns the total count of accessible rolls (and optionally a visualization).
+
+FOS receives the result and forwards it to the Elves.
+
+Extensions (Error Handling & Alternative Flows)
+2a. Grid contains invalid characters
+
+System identifies a character other than @ or .
+
+System raises InvalidGridFormatError
+
+System logs the row/column of the invalid character
+
+Use case terminates with failure
+
+2b. Grid is empty
+
+System detects zero rows or zero columns
+
+System raises EmptyGridError
+
+Provide message: “Input contains no diagram data.”
+
+3a. Rows have inconsistent length
+
+System detects ragged rows
+
+System raises InconsistentRowLengthError
+
+Request corrected input
+
+4a. Roll at edge of grid
+
+Adjacent lookup goes out of bounds
+
+System safely ignores out-of-bounds indices (treat as nonexistent / not a roll)
+
+Continue adjacency checks normally
+
+6a. No accessible rolls found
+
+System returns count = 0
+
+Provide informational message: “No rolls meet the accessibility criteria.”
+
+6b. Extremely large grid
+
+System detects grid exceeding memory constraints
+
+Fallback to streaming row-by-row adjacency processing
+
+If still too large, return ProcessingLimitExceededError
+
+Special Requirements
+
+Adjacency must consider all 8 neighboring positions (diagonals included).
+
+Grid parsing must be deterministic and whitespace-robust.
+
+Performance goal: able to process at least 10,000 × 10,000 grid cells within operational limits.
+
+Output must be reproducible given identical input.
+
+Success Guarantee
+
+The system correctly identifies all rolls which have < 4 adjacent rolls and returns their count without modifying the input grid.
