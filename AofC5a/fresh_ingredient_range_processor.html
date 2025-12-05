@@ -1,0 +1,199 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fresh Ingredient Range Processor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f9f9f9;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        textarea {
+            width: 90%;
+            height: 160px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-family: monospace;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 6px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        #steps, #results, #errors {
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 6px;
+            background: #ffffff;
+            border: 1px solid #ccc;
+        }
+
+        .error {
+            color: darkred;
+            margin-bottom: 10px;
+        }
+
+        .success {
+            color: green;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Fresh Ingredient Range Processor</h1>
+    <p>This tool executes the **Craig Larman–style use case**, step by step, including alternative paths and error handling.</p>
+
+    <h2>Paste Database Input:</h2>
+<textarea id="inputData" placeholder="Example:
+3-5
+10-14
+16-20
+12-18
+12-18
+
+1
+5
+8
+11
+17
+32"></textarea>
+
+    <br>
+    <button onclick="runProcessor()">Run Use Case</button>
+
+    <h2>Use Case Steps Executed:</h2>
+    <div id="steps"></div>
+
+    <h2>Errors & Alternative Paths:</h2>
+    <div id="errors"></div>
+
+    <h2>Final Results:</h2>
+    <div id="results"></div>
+
+
+    <script>
+function logStep(msg) {
+    document.getElementById("steps").innerHTML += `<div class='success'>✔ ${msg}</div>`;
+}
+
+function logError(msg) {
+    document.getElementById("errors").innerHTML += `<div class='error'>⚠ ${msg}</div>`;
+}
+
+function runProcessor() {
+    document.getElementById("steps").innerHTML = "";
+    document.getElementById("errors").innerHTML = "";
+    document.getElementById("results").innerHTML = "";
+
+    const raw = document.getElementById("inputData").value.trim();
+    if (!raw) {
+        logError("No input provided.");
+        return;
+    }
+
+    logStep("Elf provides the ingredient database file.");
+
+    const parts = raw.split(/\n\s*\n/);
+    if (parts.length < 2) {
+        logError("Input missing blank line separating ranges and IDs.");
+        return;
+    }
+
+    const rangeLines = parts[0].split("\n").map(x => x.trim()).filter(x => x);
+    const idLines = parts[1].split("\n").map(x => x.trim()).filter(x => x);
+
+    logStep("System reads file and splits ranges and ingredient IDs.");
+
+    let ranges = [];
+    let availableIDs = [];
+    let validRanges = true;
+
+    // Step 3: Validate ranges
+    for (let line of rangeLines) {
+        const match = line.match(/^(\d+)-(\d+)$/);
+        if (!match) {
+            logError(`Invalid range format: "${line}". Skipping.`);
+            validRanges = false;
+            continue;
+        }
+        const start = parseInt(match[1]);
+        const end = parseInt(match[2]);
+
+        if (start > end) {
+            logError(`Range start > end in "${line}". Skipping.`);
+            continue;
+        }
+
+        ranges.push([start, end]);
+    }
+
+    if (ranges.length === 0) {
+        logError("No valid ranges remain after validation. Cannot proceed.");
+        return;
+    }
+
+    logStep(`Validated ${ranges.length} fresh ID ranges.`);
+
+    // Validate IDs
+    for (let line of idLines) {
+        if (!/^\d+$/.test(line)) {
+            logError(`Invalid ingredient ID (not a number): "${line}". Skipping.`);
+            continue;
+        }
+        availableIDs.push(parseInt(line));
+    }
+
+    if (availableIDs.length === 0) {
+        logError("No valid ingredient IDs found. Nothing to classify.");
+        return;
+    }
+
+    logStep(`${availableIDs.length} valid ingredient IDs loaded.`);
+
+    // Step 4 & 5: Classification
+    logStep("Classifying ingredient IDs against ranges...");
+
+    let freshCount = 0;
+    let classification = [];
+
+    for (let id of availableIDs) {
+        let isFresh = ranges.some(([a, b]) => id >= a && id <= b);
+
+        classification.push({ id, status: isFresh ? "Fresh" : "Spoiled" });
+
+        if (isFresh) freshCount++;
+    }
+
+    logStep("Finished classification.");
+
+    // Step 7: Output results
+    let resultHTML = `<p><strong>${freshCount}</strong> ingredient IDs are fresh.</p><ul>`;
+    for (let item of classification) {
+        resultHTML += `<li>${item.id}: <strong>${item.status}</strong></li>`;
+    }
+    resultHTML += "</ul>";
+
+    document.getElementById("results").innerHTML = resultHTML;
+
+    logStep("System outputs the final result and logs successful completion.");
+}
+    </script>
+
+</body>
+</html>

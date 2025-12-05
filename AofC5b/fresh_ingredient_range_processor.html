@@ -1,0 +1,217 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Fresh Ingredient ID Range Processor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f6f6f6;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+        }
+
+        #output {
+            white-space: pre-wrap;
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+
+        #finalAnswer {
+            white-space: pre-wrap;
+            background: #e1ffe1;
+            padding: 15px;
+            border: 2px solid #3a7a3a;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        .warn {
+            color: #b36b00;
+        }
+
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Fresh Ingredient ID Range Processor</h1>
+
+    <p>
+        This tool executes the full use case:<br>
+        <b>“Process the database file again. How many ingredient IDs are considered to be fresh according to the fresh ingredient ID ranges?”</b>
+    </p>
+
+    <p>Paste the complete database file content (both sections). The system will extract only the first block of fresh ID ranges.</p>
+
+<textarea id="inputText" placeholder="Paste input file contents here..."></textarea>
+
+    <br>
+    <button onclick="processFile()">Run Use Case</button>
+
+    <h2>Step-by-Step Log</h2>
+    <div id="output"></div>
+
+    <h2>Answer</h2>
+    <div id="finalAnswer">The answer will appear here after processing.</div>
+
+    <script>
+        function log(message, cssClass = "") {
+            const output = document.getElementById("output");
+            const span = document.createElement("div");
+            if (cssClass) span.classList.add(cssClass);
+            span.textContent = message;
+            output.appendChild(span);
+        }
+
+        function clearOutput() {
+            document.getElementById("output").innerHTML = "";
+            document.getElementById("finalAnswer").innerHTML = "The answer will appear here after processing.";
+        }
+
+        function processFile() {
+            clearOutput();
+
+            // ------------------------------
+            // Step 1 — Read input
+            // ------------------------------
+
+            const text = document.getElementById("inputText").value;
+
+            if (!text.trim()) {
+                const msg = "ERROR: Empty input — nothing to process.";
+                log(msg, "error");
+                document.getElementById("finalAnswer").innerHTML = msg;
+                return;
+            }
+
+            const lines = text.replace(/\r/g, "").split("\n");
+
+            // ------------------------------
+            // Step 2 — Separate blocks
+            // ------------------------------
+            const blankIndex = lines.findIndex(line => line.trim() === "");
+
+            if (blankIndex === -1) {
+                const msg = "ERROR: Missing blank line separation — cannot locate range block.";
+                log(msg, "error");
+                document.getElementById("finalAnswer").innerHTML = msg;
+                return;
+            }
+
+            const rangeLines = lines.slice(0, blankIndex);
+
+            // ------------------------------
+            // Step 3 — Parse and validate ranges
+            // ------------------------------
+
+            const validRanges = [];
+            const pattern = /^\s*(-?\d+)\s*-\s*(-?\d+)\s*$/;
+
+            log("Parsing ranges...");
+
+            for (const raw of rangeLines) {
+                const match = raw.match(pattern);
+
+                if (!match) {
+                    log(`WARNING: Invalid range '${raw}' — skipping.`, "warn");
+                    continue;
+                }
+
+                const start = Number(match[1]);
+                const end = Number(match[2]);
+
+                if (start > end) {
+                    log(`WARNING: Range start > end for '${raw}' — skipping.`, "warn");
+                    continue;
+                }
+
+                validRanges.push({ start, end });
+            }
+
+            if (validRanges.length === 0) {
+                const msg = "ERROR: No valid fresh ranges found — cannot compute fresh IDs.";
+                log(msg, "error");
+                document.getElementById("finalAnswer").innerHTML = msg;
+                return;
+            }
+
+            // ------------------------------
+            // Step 4 — Sort ranges
+            // ------------------------------
+
+            validRanges.sort((a, b) => a.start - b.start || a.end - b.end);
+
+            log("\nSorted ranges:");
+            validRanges.forEach(r => log(`  ${r.start}-${r.end}`));
+
+            // ------------------------------
+            // Step 5 — Merge ranges
+            // ------------------------------
+
+            const merged = [];
+            let currentStart = validRanges[0].start;
+            let currentEnd = validRanges[0].end;
+
+            for (let i = 1; i < validRanges.length; i++) {
+                const r = validRanges[i];
+
+                if (r.start <= currentEnd + 1) {
+                    currentEnd = Math.max(currentEnd, r.end);
+                } else {
+                    merged.push({ start: currentStart, end: currentEnd });
+                    currentStart = r.start;
+                    currentEnd = r.end;
+                }
+            }
+
+            merged.push({ start: currentStart, end: currentEnd });
+
+            log("\nMerged ranges:");
+            merged.forEach(r => log(`  ${r.start}-${r.end}`));
+
+            // ------------------------------
+            // Step 6 — Compute total
+            // ------------------------------
+
+            let total = 0;
+            for (const r of merged) {
+                total += (r.end - r.start + 1);
+            }
+
+            const successMessage = `The fresh ingredient ID ranges cover ${total} distinct ingredient IDs.`;
+
+            log(`\n${successMessage}`, "success");
+            log("Use case completed successfully.", "success");
+
+            // ------------------------------
+            // Final Answer Output (requested addition)
+            // ------------------------------
+            document.getElementById("finalAnswer").innerHTML =
+                `<b>Process the database file again. How many ingredient IDs are considered to be fresh?</b><br><br>` +
+                `<b>Answer: ${total}</b>`;
+        }
+    </script>
+
+</body>
+</html>

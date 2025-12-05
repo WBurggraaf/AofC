@@ -1,0 +1,235 @@
+﻿⭐ USE CASE: Compute Total Fresh Ingredient IDs from Ranges (Self-Contained Full Version)
+
+(This use case includes EVERYTHING needed to write a complete working solution.)
+
+1. Use Case Name
+
+Determine All Fresh Ingredient IDs from Ranges
+
+This use case defines how the system must process a file containing fresh ingredient ID ranges and compute exactly how many distinct ingredient IDs fall within those ranges.
+
+2. Primary Actor
+
+Kitchen Inventory System (invoked by an Elf)
+
+3. Stakeholders & Interests
+Kitchen Elves
+
+Want to know the full list of valid fresh ingredient IDs so they can automatically identify spoiled inventory without further assistance.
+
+Want the system to merge overlapping and touching ranges so IDs are not counted multiple times.
+
+Inventory Manager
+
+Needs an accurate single number: the total count of distinct ingredient IDs covered by the ranges in the database.
+
+System
+
+Must parse ranges safely, merge them correctly, handle malformed data, and compute a correct union size even for extremely large integer values.
+
+4. Preconditions
+
+An input file exists that contains:
+
+A list of fresh ingredient ID ranges (one per line), each in format start-end.
+
+A blank line.
+
+A second section (available IDs), which is ignored in this use case.
+
+Example input format:
+
+3-5
+10-14
+16-20
+12-18
+
+1
+5
+8
+12
+17
+
+
+The second section MUST NOT be used for Part 2.
+
+5. Postconditions
+
+System outputs a single integer: the number of distinct ingredient IDs considered fresh according to the ranges.
+
+System optionally outputs the merged ranges used in the calculation.
+
+System logs the use case steps and any warnings.
+
+6. Main Success Scenario (MSS)
+
+Elf provides the database file containing the fresh ingredient ranges.
+
+System opens and reads the entire file.
+
+System extracts only the first section (up to the blank line) as the set of fresh ranges.
+
+System validates each range, checking:
+
+Format must be start-end
+
+start and end must be valid integers (64-bit safe)
+
+start <= end
+
+System discards invalid ranges, recording warnings for each skipped range.
+
+System sorts all remaining valid ranges by ascending start value.
+
+System merges overlapping or adjacent ranges using the following logic:
+
+Two ranges A and B overlap or touch if
+
+B.start <= A.end + 1
+
+
+Overlapping ranges are replaced with a single range:
+
+merged.start = min(A.start, B.start)
+merged.end   = max(A.end, B.end)
+
+
+System computes the total count of fresh ingredient IDs:
+
+For each merged range:
+
+count += (end - start + 1)
+
+
+System outputs the final total, e.g.:
+
+“The fresh ingredient ID ranges cover 14 distinct ingredient IDs.”
+
+System logs successful completion.
+
+7. Extensions / Alternate Flows (Error Handling)
+3a — Blank line missing
+
+System logs error:
+
+“ERROR: Missing blank line separation — cannot locate range block.”
+
+Use case ends unsuccessfully.
+
+4a — Malformed range
+
+If a range does not match number-number:
+
+4a1. System logs:
+
+“WARNING: Invalid range ‘<value>’ — skipping.”
+
+4a2. Processing continues.
+
+4b — Range where start > end
+
+System logs:
+
+“WARNING: Range start > end for ‘<value>’ — skipping.”
+
+5a — No valid ranges remain
+
+System logs:
+
+“ERROR: No valid fresh ranges found — cannot compute fresh IDs.”
+
+Use case ends.
+
+File-level problems
+
+Missing file → System logs error, stops.
+
+Unreadable file (permission denied) → Logs error, stops.
+
+Empty file → Logs error, stops.
+
+8. Business Rules (Fully Self-Contained)
+BR1 — Range Format
+
+A valid range:
+
+Must contain exactly one hyphen.
+
+Must parse both sides into signed 64-bit integers.
+
+Must satisfy start <= end.
+
+BR2 — Overlapping & Adjacent Range Merging
+
+Ranges A and B are merged when:
+
+B.start <= A.end + 1
+
+
+Examples:
+
+A	B	Merged?	Reason
+3–5	6–10	YES	Touching range (6 = 5+1)
+10–14	12–18	YES	Overlapping
+16–20	30–40	NO	Completely separate
+BR3 — Compute Union Size
+
+Total fresh IDs =
+Sum of (mergedEnd - mergedStart + 1) for all merged ranges.
+
+BR4 — Ignore available IDs section
+
+The list of available ingredient IDs from Part 1 must not influence Part 2.
+
+9. Supporting Examples
+Example input:
+3-5
+10-14
+16-20
+12-18
+
+Sorted:
+3–5
+10–14
+12–18
+16–20
+
+Merged:
+3–5
+10–20
+
+Calculated total:
+3–5 → 3 IDs
+10–20 → 11 IDs
+Total = 14
+
+10. Notes for Implementation
+Required components:
+
+Range parser
+
+Range validator
+
+Range sorting algorithm
+
+Range merging algorithm
+
+64-bit union length calculation
+
+Error logger
+
+File reader
+
+Use case orchestrator
+
+Data types:
+
+Use long (Int64) for range boundaries.
+
+Performance:
+
+Sorting: O(n log n)
+
+Merging: O(n)
+
+Total: Works for millions of ranges.

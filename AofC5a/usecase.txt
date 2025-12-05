@@ -1,0 +1,139 @@
+﻿Use Case: Determine Fresh Ingredient IDs
+Primary Actor
+
+Kitchen Inventory System (invoked by an Elf)
+
+Stakeholders & Interests
+
+Kitchen Elves – Want to know which available ingredients are fresh so they can safely prepare meals.
+
+Inventory Manager – Wants accurate classification based on the defined fresh ID ranges.
+
+System – Needs to correctly parse ranges and IDs, handle invalid inputs, and report reliable results.
+
+Preconditions
+
+A database file is available containing:
+
+One or more fresh ingredient ID ranges in the form a-b, inclusive.
+
+A blank line.
+
+One or more available ingredient IDs, one per line.
+
+File is readable and accessible.
+
+Postconditions
+
+The system reports:
+
+A list or count of which available ingredient IDs are fresh.
+
+Any invalid ranges or IDs encountered during processing.
+
+Main Success Scenario (MSS)
+
+Elf provides the ingredient database file to the system.
+
+System reads the file and separates:
+
+The set of fresh ID ranges.
+
+The set of available ingredient IDs.
+
+System validates the structure:
+
+Ensures all ranges are in start-end format.
+
+Ensures IDs are integers.
+
+For each fresh range:
+
+System expands or stores the numeric interval (inclusive).
+
+For each available ingredient ID:
+
+System checks whether the ID falls within any fresh range.
+
+System marks the ID as:
+
+Fresh (if within at least one range), or
+
+Spoiled (otherwise).
+
+System counts the number of fresh ingredients.
+
+System outputs the result, e.g.:
+
+“3 of the available ingredient IDs are fresh.”
+
+System logs successful completion.
+
+Extensions (Error Handling)
+3a. Invalid range format
+
+3a1. System detects malformed range (e.g., missing hyphen, non-numeric bounds).
+
+3a2. System logs an error specifying the offending line.
+
+3a3. System skips the invalid range and continues processing.
+
+3a4. If no valid ranges remain, system reports:
+
+“No valid fresh ID ranges found — cannot classify ingredients.”
+
+3b. Invalid ingredient ID format
+
+3b1. System encounters a non-integer available ID.
+
+3b2. System logs the issue.
+
+3b3. System skips that ID and continues.
+
+4a. Overlapping or unsorted ranges
+
+4a1. System normalizes them (merge where possible or simply evaluate inclusively).
+
+4a2. Processing continues without failure.
+
+5a. No available ingredient IDs found
+
+5a1. System reports:
+
+“No available ingredient IDs provided — nothing to classify.”
+
+7a. Output channel failure (e.g., cannot write to console/file)
+
+7a1. System retries output.
+
+7a2. If still failing, system logs:
+
+“Unable to output results due to system error.”
+
+Supporting Information
+Range Inclusion Logic
+
+A fresh range a-b contains all integers a ≤ x ≤ b.
+A given ID is fresh if any defined range contains it.
+
+Example From Problem
+
+Fresh ranges:
+
+3-5
+10-14
+16-20
+12-18
+
+
+Available IDs:
+
+1  → spoiled  
+5  → fresh  
+8  → spoiled  
+11 → fresh  
+17 → fresh  
+32 → spoiled  
+
+
+Result: 3 fresh IDs
