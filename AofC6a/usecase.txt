@@ -1,0 +1,206 @@
+﻿1. USE CASE NAME
+
+Solve Cephalopod Worksheet
+
+2. SCOPE
+
+Cephalopod Math Processing System (CMPS)
+
+3. LEVEL
+
+User-level, goal-oriented
+(Equivalent to Craig Larman’s “user goal level”)
+
+4. PRIMARY ACTOR
+
+Player (WBurggraaf) — wishes to compute the Advent of Code worksheet’s grand total.
+
+5. STAKEHOLDERS & INTERESTS
+Player
+
+Wants a correct, exact grand total for all problems in the worksheet.
+
+Wants deterministic behavior regardless of formatting irregularities.
+
+Wants visibility into parsing decisions and error conditions.
+
+Cephalopod Student
+
+Needs correct answers for homework validation.
+
+Needs proper grouping of vertical operands per problem.
+
+Puzzle System
+
+Must accept the computed answer.
+
+Expects use of raw puzzle input exactly as provided.
+
+Solver System (CMPS)
+
+Needs to support extremely wide worksheets with thousands of columns.
+
+Must maintain precision even for large multiplications.
+
+6. PRECONDITIONS
+
+Full worksheet input has been obtained (your long dataset).
+
+Input contains:
+
+Multiple rows of integers (operands)
+
+One operator row (+ or *)
+
+Columns of all spaces separating adjacent problems
+
+Alignment within each problem is irrelevant.
+
+7. POSTCONDITIONS
+Success Guarantees
+
+Each problem’s column group is identified based strictly on full-space separators.
+
+Each row contributes at most one operand per problem (single-row → single-number rule).
+
+Each operand is parsed exactly as provided (BigInt behavior in HTML/C#, no float).
+
+The indicated operator is applied to all operands of that problem.
+
+All problem results are summed into a final Grand Total.
+
+The total is returned to the Player.
+
+Minimal Guarantees
+
+All parsing errors are reported with column/row indexes.
+
+No silent skipping of errors unless specified by extension rules.
+
+8. MAIN SUCCESS SCENARIO (MSS)
+
+Player provides the worksheet (your huge dataset).
+
+System loads the input as a sequence of lines.
+
+System identifies max line width and pads lines (normalizing parchment width).
+
+System identifies the operator row (last line).
+
+System identifies problem column groups by scanning left→right:
+
+Any column where all characters in all operand rows AND the operator row = space
+→ a separator
+
+For each detected column group (problem):
+
+System extracts one operand per row:
+
+Concatenates characters only from that row within the group
+
+Trims
+
+If non-empty, parses as integer
+
+System finds exactly one operator in that column group:
+
+First non-space operator (+ or *) wins
+
+System computes the result using BigInt arithmetic.
+
+System adds the result to the Grand Total.
+
+After all column groups are processed, system outputs the Grand Total.
+
+9. EXTENSIONS (ERROR / ALTERNATIVE FLOWS)
+3a. Input lines not same width
+
+System normalizes by padding with spaces → continue.
+
+5a. No columns found at all
+
+System reports:
+“No problems detected—input invalid or wrongly formatted.”
+
+6a. Operand row contains illegal character
+
+System logs error with row & column.
+
+Problem is skipped unless strict mode is enabled.
+
+6b. A column row yields more than one number
+
+System uses only one number per row; alignment ignored; logs a warning.
+
+6c. Empty number in a row
+
+Skipped silently; continues with others.
+
+6d. Very large numbers (beyond 64-bit)
+
+BigInt is used; no overflow.
+
+Known scenario with AoC puzzle inputs.
+
+**6e. Operator row contains:
+
+Unknown symbols
+
+Multiple operators mapped to one column group**
+
+System applies:
+
+First valid operator encountered
+
+Logs ignored duplicates
+
+6f. Missing operator in a problem
+
+System reports issue and skips problem.
+
+6g. Multiplication explosion (over 10⁶ digits)
+
+System continues using BigInt (arbitrary precision).
+
+Logs “very large intermediate value”.
+
+7a. Grand total overflows 64-bit
+
+System continues using BigInt.
+
+No loss of precision.
+
+7b. No valid problems parsed
+
+Output explicitly: “Grand Total = 0 (no valid problems)”
+
+10. SPECIAL REQUIREMENTS
+Functional
+
+Must process worksheets thousands of columns wide.
+
+Must handle BigInt calculations for both addition and multiplication.
+
+Must not misinterpret vertical alignment (left/right doesn’t matter).
+
+Must strictly use column groups for problem segmentation.
+
+Non-functional
+
+Precision-critical: no floating-point usage allowed.
+
+Fast enough for hundreds of thousands of operations.
+
+Deterministic output between implementations (C#, JS, Python).
+
+11. FREQUENCY OF USE
+
+One execution per puzzle submission.
+
+12. OPEN ISSUES
+
+Should malformed problems contribute 0 or be skipped entirely?
+
+Should warnings be displayed per operand or batched?
+
+Should strictly formatted AoC input be assumed (current assumption)?

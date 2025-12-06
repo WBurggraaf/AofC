@@ -1,0 +1,201 @@
+﻿📘 Use Case: Solve Cephalopod Columnar Worksheet (Right-to-Left Interpretation)
+1. USE CASE NAME
+
+Solve Cephalopod Columnar Worksheet (Part Two Rules)
+
+2. SCOPE
+
+Cephalopod Columnar Mathematics Engine (CCME)
+
+3. LEVEL
+
+User-goal level
+
+4. PRIMARY ACTOR
+
+Player (WBurggraaf) — wishes to compute the grand total under Part Two’s right-to-left cephalopod rules.
+
+5. STAKEHOLDERS & INTERESTS
+Player
+
+Wants the correct grand total for the worksheet under Part Two rules.
+
+Expects deterministic, unambiguous parsing of the unusually wide input.
+
+Wants visibility into how columns become digits, numbers, and problems.
+
+Cephalopod Student
+
+Requires correct evaluation to verify homework exercises.
+
+Puzzle System (Advent of Code)
+
+Requires exact reproduction of AoC logic.
+
+Validates only the final numeric grand total.
+
+Cephalopod Columnar Mathematics Engine (CCME)
+
+Must interpret digits as vertical columns, not horizontal strings.
+
+Must support arbitrary precision and extremely large intermediate values.
+
+Must handle thousands of columns and a large number of problems.
+
+6. PRECONDITIONS
+
+Full worksheet (input.txt) is provided exactly as written.
+
+Input consists of:
+
+Many rows of digit characters (0–9) or spaces.
+
+Bottom row containing operators (+ or *) with spaces elsewhere.
+
+Adjacent problems are separated by at least one full column of spaces.
+
+No assumptions may be made about:
+
+Alignment of digits,
+
+Number width,
+
+Operator spacing.
+
+7. POSTCONDITIONS
+Success Guarantees
+
+Worksheet is completely reinterpreted right-to-left, column by column.
+
+Each column group becomes one problem, composed of:
+
+Numbers formed from digits read top → bottom inside each column group,
+
+Operator from the bottom row at that column group.
+
+All numbers are interpreted as BigInt.
+
+Each problem is evaluated according to its operator.
+
+All problem results are summed into a grand total, returned to the Player.
+
+Minimal Guarantees
+
+If malformed columns or operators appear, they are reported with column index.
+
+Invalid problems are excluded unless strict mode overrides default.
+
+8. MAIN SUCCESS SCENARIO (MSS)
+
+(Part Two — Right-to-Left Column Interpretation)
+
+Player provides the full worksheet (input.txt).
+
+System loads all lines and pads them to equal width.
+
+System identifies the operator row as the last line.
+
+System scans the worksheet right→left, column by column, grouping columns into problems:
+
+A problem is a maximal contiguous set of non-space columns.
+
+Problems are separated by at least one full column of spaces.
+
+For each identified problem (starting from rightmost):
+
+Extract digits for each number:
+
+For each column in the group, read characters top→just above operator row.
+
+If a character is a digit, that column contributes one digit to the number.
+
+Columns accumulate digits from left→right inside the group.
+
+Form numbers:
+
+Each row of digits forms a digit at a specific significance position.
+
+The least-significant digit is the bottom-most digit provided by the column group.
+
+Parse each resulting value as BigInt.
+
+Extract operator:
+
+The operator is the first + or * found in the operator row within the group.
+
+Evaluate:
+
+Apply the operator across all numbers in the group.
+
+Add the problem’s result to the running grand total.
+
+After all column groups are evaluated, System returns the grand total to the Player.
+
+9. EXTENSIONS (ERROR & ALTERNATIVE FLOWS)
+4a. Column contains illegal characters
+
+System logs the column index.
+
+Digits from that column ignored unless strict mode requires termination.
+
+4b. Operator missing in a problem
+
+System logs (Problem <index>: missing operator).
+
+Problem skipped.
+
+5a. Column group yields no digits
+
+System logs warning.
+
+Problem skipped.
+
+5b. Numbers with internal empty digits
+
+Empty digits become zeroes only if strict cephalopod rules say so; otherwise digits are collapsed.
+
+5c. Very large BigInt multiplications (millions of digits)
+
+System continues normally; logs “huge intermediate value computed”.
+
+6a. Grand total exceeds machine integer range
+
+Always uses arbitrary precision; no overflow occurs.
+
+7a. No valid problems parsed
+
+Output:
+“Grand Total = 0 (no valid problems)”
+
+10. SPECIAL REQUIREMENTS
+Functional
+
+Interpret digits using columnar vertical reading, not horizontal string parsing.
+
+Read entire worksheet right-to-left.
+
+Use BigInt arithmetic only.
+
+Support extremely wide inputs (10k+ columns).
+
+Must faithfully replicate AoC Part Two behavior.
+
+Non-Functional
+
+Deterministic across languages (Python, JS, C#, Java).
+
+High-performance parsing for very large datasets.
+
+Stable behavior regardless of whitespace irregularities.
+
+11. FREQUENCY OF USE
+
+One execution per puzzle submission.
+
+12. OPEN ISSUES
+
+Should malformed column digits be zero-filled or skipped?
+
+Should multi-operator columns emit warnings or errors?
+
+Should strict cephalopod formatting be default or opt-in?

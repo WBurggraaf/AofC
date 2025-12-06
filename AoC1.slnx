@@ -9,4 +9,6 @@
   <Project Path="AofC4b/AofC4b.csproj" Id="7441d64c-7e12-4157-8291-dd4490208a41" />
   <Project Path="AofC5a/AofC5a.csproj" Id="0552da29-f666-4e81-8810-be4825f76000" />
   <Project Path="AofC5b/AofC5b.csproj" Id="75227de9-3ea6-42e3-a5cf-efea5a8542f3" />
+  <Project Path="AofC6a/AofC6a.csproj" Id="c6eb0aef-5c19-45aa-bc11-2166f08776ce" />
+  <Project Path="AofC6b/AofC6b.csproj" Id="6a1b359f-b2a8-4835-80ee-e49478e941c1" />
 </Solution>

@@ -1,0 +1,213 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cephalopod Worksheet Solver (CMPS) – BigInt, Full Use Case Implementation</title>
+
+    <style>
+        body {
+            font-family: Consolas, monospace;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        textarea {
+            width: 100%;
+            height: 260px;
+            font-family: Consolas, monospace;
+        }
+
+        button {
+            padding: 10px 18px;
+            margin-top: 8px;
+        }
+
+        .log {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 12px;
+            margin-top: 20px;
+            height: 380px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+
+        .error {
+            color: #b00000;
+            font-weight: bold;
+        }
+
+        .warn {
+            color: #a06a00;
+            font-weight: bold;
+        }
+
+        .ok {
+            color: #005500;
+            font-weight: bold;
+        }
+
+        .head {
+            color: #003388;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>CMPS – Cephalopod Math Worksheet Solver<br><small>(BigInt Precise, Use Case Compliant)</small></h1>
+
+<textarea id="inputBox" placeholder="Paste worksheet input here..."></textarea>
+    <br>
+    <button onclick="runCMPS()">Run Solver</button>
+
+    <div class="log" id="log"></div>
+
+    <script>
+        function log(msg, cls = "") {
+            const box = document.getElementById("log");
+            const line = document.createElement("div");
+            if (cls) line.classList.add(cls);
+            line.textContent = msg;
+            box.appendChild(line);
+        }
+
+        function runCMPS() {
+            document.getElementById("log").innerHTML = "";
+            log("=== CMPS RUN STARTED ===", "head");
+
+            const input = document.getElementById("inputBox").value.replace(/\r\n/g, "\n");
+            if (!input.trim()) {
+                log("ERROR: No input provided.", "error");
+                return;
+            }
+
+            let lines = input.split("\n");
+            log("Loaded worksheet with " + lines.length + " lines.");
+
+            if (lines.length < 2) {
+                log("ERROR: At least one operand row and one operator row required.", "error");
+                return;
+            }
+
+            // MSS Step: Normalize widths (3a extension)
+            const maxLen = Math.max(...lines.map(l => l.length));
+            lines = lines.map(l => l.padEnd(maxLen, " "));
+            log("Normalized all rows to width = " + maxLen + ".");
+
+            const opLine = lines[lines.length - 1];
+            const numLines = lines.slice(0, -1);
+
+            log("Operator row isolated. Operand rows count = " + numLines.length + ".");
+
+            // MSS Step: Identify column problem groups
+            const groups = [];
+            let current = [];
+            let collecting = false;
+
+            function isSeparatorColumn(col) {
+                if (opLine[col] !== " ") return false;
+                for (let r = 0; r < numLines.length; r++) {
+                    if (numLines[r][col] !== " ") return false;
+                }
+                return true;
+            }
+
+            for (let c = 0; c < maxLen; c++) {
+                if (isSeparatorColumn(c)) {
+                    if (collecting) {
+                        groups.push([...current]);
+                        current = [];
+                    }
+                    collecting = false;
+                } else {
+                    collecting = true;
+                    current.push(c);
+                }
+            }
+            if (current.length > 0) groups.push(current);
+
+            if (groups.length === 0) {
+                log("ERROR: No problems detected (Extension 5a).", "error");
+                return;
+            }
+
+            log("Detected " + groups.length + " problem column groups.");
+
+            // Process each group
+            let grandTotal = 0n;
+
+            groups.forEach((cols, idx) => {
+                log("\n--- Problem " + (idx + 1) + " ---", "head");
+
+                const numbers = [];
+
+                // MSS: Extract exactly one number per row
+                for (let r = 0; r < numLines.length; r++) {
+                    let slice = "";
+                    for (const c of cols) slice += numLines[r][c];
+                    const trimmed = slice.trim();
+
+                    if (trimmed === "") continue;
+
+                    if (!/^[0-9]+$/.test(trimmed)) {
+                        log("ERROR: Illegal character in operand row " + r + " (Ext. 6a). Skipping problem.", "error");
+                        return;
+                    }
+
+                    try {
+                        numbers.push(BigInt(trimmed));
+                    } catch {
+                        log("ERROR: Could not parse operand '" + trimmed + "' as BigInt.", "error");
+                        return;
+                    }
+                }
+
+                if (numbers.length === 0) {
+                    log("WARNING: Problem contains no valid numbers. Skipping.", "warn");
+                    return;
+                }
+
+                log("Operands (" + numbers.length + "): " + numbers.join(", "));
+
+                // MSS: Determine operator
+                let op = null;
+                for (const c of cols) {
+                    const ch = opLine[c];
+                    if (ch === "+" || ch === "*") {
+                        if (op === null) op = ch;
+                        else log("WARNING: Multiple operators detected; using first '" + op + "' (Ext. 6e).", "warn");
+                    }
+                }
+
+                if (!op) {
+                    log("ERROR: Missing operator (Ext. 6f). Skipping problem.", "error");
+                    return;
+                }
+
+                log("Operator: " + op);
+
+                // MSS: Compute result using BigInt
+                let result;
+                if (op === "+") {
+                    result = numbers.reduce((a, b) => a + b, 0n);
+                } else {
+                    result = numbers.reduce((a, b) => a * b, 1n);
+                }
+
+                log("Result = " + result.toString(), "ok");
+
+                grandTotal += result;
+                log("Grand Total so far = " + grandTotal.toString());
+            });
+
+            // Final output
+            log("\n=== FINAL GRAND TOTAL ===\n" + grandTotal.toString(), "head");
+        }
+    </script>
+
+</body>
+</html>

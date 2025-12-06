@@ -1,0 +1,242 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cephalopod Worksheet Solver — Multi-Core + Progress</title>
+    <style>
+        body {
+            background: #111;
+            color: #eee;
+            font-family: monospace;
+            padding: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 250px;
+            background: #222;
+            color: #0f0;
+            border: 1px solid #444;
+            padding: 10px;
+        }
+
+        button {
+            background: #444;
+            color: white;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border: none;
+            cursor: pointer;
+        }
+
+            button:hover {
+                background: #666;
+            }
+
+        .log {
+            background: #222;
+            padding: 10px;
+            border: 1px solid #444;
+            max-height: 600px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        #progressContainer {
+            width: 100%;
+            background: #333;
+            height: 25px;
+            border: 1px solid #666;
+            margin-top: 10px;
+        }
+
+        #progressBar {
+            width: 0%;
+            height: 100%;
+            background: #0a0;
+            transition: width 0.15s linear;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Cephalopod Worksheet Solver — Parallel BigInt (Part Two) + Progress Bar</h1>
+
+<textarea id="input"></textarea>
+
+    <button onclick="runSolver()">Solve (Multi-Core)</button>
+    <button onclick="clearLog()">Clear Log</button>
+
+    <h2>Progress</h2>
+    <div id="progressContainer"><div id="progressBar"></div></div>
+    <div id="progressText">0%</div>
+
+    <h2>Execution Log</h2>
+    <div id="log" class="log"></div>
+
+    <script>
+        function log(m) { document.getElementById("log").innerText += m + "\n"; }
+        function clearLog() { document.getElementById("log").innerText = ""; }
+        function updateProgress(percent) {
+            percent = Math.max(0, Math.min(100, percent));
+            document.getElementById("progressBar").style.width = percent + "%";
+            document.getElementById("progressText").innerText = percent.toFixed(1) + "%";
+        }
+
+        // ------------------ Worker Code as Blob -----------------------------
+        const workerCode = `
+onmessage = function(e){
+        const { groups, digitRows, operatorRow, workerId } = e.data;
+        let partialTotal = 0n;
+        let localLog = "";
+        let processed = 0;
+
+        const totalGroups = groups.length;
+
+        for (let g = 0; g < totalGroups; g++){
+            const group = groups[g];
+            processed++;
+
+            // Report progress to main thread
+            postMessage({ workerId, progress: processed / totalGroups, type: "progress" });
+
+            localLog += "Worker " + workerId + " processing group: " + JSON.stringify(group) + "\\n";
+
+            // Find operator
+            let op = null;
+            for (const col of group){
+                const c = operatorRow[col];
+                if (c === "+" || c === "*"){ op = c; break; }
+            }
+            if (!op){
+                localLog += "Missing operator → skipped\\n";
+                continue;
+            }
+
+            // Extract numbers (one per column)
+            let numbers = [];
+            for (const col of group){
+                let ds = "";
+                for (let r = 0; r < digitRows.length; r++){
+                    const ch = digitRows[r][col];
+                    if (/\\d/.test(ch)) ds += ch;
+                }
+                if (ds.length > 0){
+                    try { numbers.push(BigInt(ds)); }
+                    catch { localLog += "Bad BigInt parse at col " + col + "\\n"; }
+                }
+            }
+            if (numbers.length === 0){
+                localLog += "No digits → skipped\\n";
+                continue;
+            }
+
+            // Compute
+            let result = numbers[0];
+            for (let i = 1; i < numbers.length; i++){
+                result = (op === "+") ? (result + numbers[i]) : (result * numbers[i]);
+            }
+
+            partialTotal += result;
+        }
+
+        // Finished
+        postMessage({ workerId, partialTotal, log: localLog, type: "done" });
+};`;
+
+        const workerBlob = new Blob([workerCode], { type: "application/javascript" });
+        const workerURL = URL.createObjectURL(workerBlob);
+
+        async function runSolver() {
+            clearLog();
+            updateProgress(0);
+            log("=== Multi-Core Cephalopod Solver (Part Two) ===");
+
+            const raw = document.getElementById("input").value;
+            if (!raw.trim()) return log("ERROR: No input provided.");
+
+            let lines = raw.split("\n");
+            const width = Math.max(...lines.map(x => x.length));
+            lines = lines.map(x => x.padEnd(width, " "));
+
+            const operatorRow = lines.at(-1);
+            const digitRows = lines.slice(0, -1);
+
+            log("Input normalized to width " + width);
+
+            let groups = [];
+            let current = [];
+
+            for (let col = width - 1; col >= 0; col--) {
+                const empty = operatorRow[col] === " " &&
+                    digitRows.every(r => r[col] === " ");
+                if (empty) {
+                    if (current.length) {
+                        groups.push([...current].reverse());
+                        current = [];
+                    }
+                } else current.push(col);
+            }
+            if (current.length) groups.push([...current].reverse());
+
+            log("Detected " + groups.length + " groups");
+            const totalGroups = groups.length;
+
+            const cpu = navigator.hardwareConcurrency || 4;
+            const workerCount = Math.max(1, cpu - 1);
+            log("Using " + workerCount + " workers (detected " + cpu + " cores).");
+
+            const chunkSize = Math.ceil(totalGroups / workerCount);
+            let total = 0n;
+            let workersDone = 0;
+            let workerProgress = Array(workerCount).fill(0);
+
+            return new Promise(resolve => {
+                for (let w = 0; w < workerCount; w++) {
+                    const start = w * chunkSize;
+                    const chunk = groups.slice(start, start + chunkSize);
+
+                    if (chunk.length === 0) {
+                        workersDone++;
+                        continue;
+                    }
+
+                    const worker = new Worker(workerURL);
+
+                    worker.onmessage = (msg) => {
+                        const data = msg.data;
+
+                        if (data.type === "progress") {
+                            workerProgress[data.workerId] = data.progress;
+                            const avg = workerProgress.reduce((a, b) => a + b, 0) / workerCount;
+                            updateProgress(avg * 100);
+                            return;
+                        }
+
+                        if (data.type === "done") {
+                            log(data.log);
+                            total += data.partialTotal;
+                            workersDone++;
+
+                            if (workersDone === workerCount) {
+                                updateProgress(100);
+                                log("=== FINAL GRAND TOTAL (BIGINT) ===");
+                                log(String(total));
+                                resolve();
+                            }
+                        }
+                    };
+
+                    worker.postMessage({
+                        workerId: w,
+                        groups: chunk,
+                        digitRows,
+                        operatorRow
+                    });
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
